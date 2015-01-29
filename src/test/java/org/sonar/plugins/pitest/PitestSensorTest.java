@@ -19,7 +19,27 @@
  */
 package org.sonar.plugins.pitest;
 
-import org.apache.commons.configuration.Configuration;
+import static java.util.Arrays.asList;
+import static org.fest.assertions.Assertions.assertThat;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.sonar.plugins.pitest.PitestConstants.MODE_KEY;
+import static org.sonar.plugins.pitest.PitestConstants.MODE_REUSE_REPORT;
+import static org.sonar.plugins.pitest.PitestConstants.MODE_SKIP;
+import static org.sonar.plugins.pitest.PitestConstants.REPORT_DIRECTORY_KEY;
+import static org.sonar.plugins.pitest.PitestConstants.REPOSITORY_KEY;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,6 +50,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 import org.sonar.api.batch.SensorContext;
 import org.sonar.api.component.ResourcePerspectives;
+import org.sonar.api.config.Settings;
 import org.sonar.api.issue.Issuable;
 import org.sonar.api.issue.Issue;
 import org.sonar.api.profiles.RulesProfile;
@@ -44,27 +65,16 @@ import org.sonar.api.scan.filesystem.FileQuery;
 import org.sonar.api.scan.filesystem.ModuleFileSystem;
 import org.sonar.test.TestUtils;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import static java.util.Arrays.asList;
-import static org.fest.assertions.Assertions.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
-import static org.sonar.plugins.pitest.PitestConstants.*;
-
 @RunWith(MockitoJUnitRunner.class)
 public class PitestSensorTest {
 
   private PitestSensor sensor;
+  private Settings settings;
+
   @Mock
   private RulesProfile rulesProfile;
   @Mock
   private ResultParser parser;
-  @Mock
-  private Configuration configuration;
   @Mock
   private Project project;
   @Mock
@@ -82,6 +92,7 @@ public class PitestSensorTest {
 
   @Before
   public void setUp() {
+    settings = new Settings();
     when(fileSystem.files(any(FileQuery.class))).thenReturn(asList(new File("whatever")));
   }
 
@@ -89,7 +100,7 @@ public class PitestSensorTest {
   public void should_skip_analysis_if_no_specific_pit_configuration() throws Exception {
     // given
     when(project.getAnalysisType()).thenReturn(AnalysisType.DYNAMIC);
-    when(configuration.getString(MODE_KEY, MODE_SKIP)).thenReturn(MODE_SKIP);
+    settings.appendProperty(MODE_KEY, MODE_SKIP);
     profileWithActiveRule();
     sensor = buildSensor();
     // when
@@ -114,7 +125,7 @@ public class PitestSensorTest {
   public void should_skip_analysis_if_dynamic_analysis_disabled() throws Exception {
     // given
     when(project.getAnalysisType()).thenReturn(AnalysisType.STATIC);
-    when(configuration.getString(MODE_KEY, MODE_SKIP)).thenReturn(MODE_REUSE_REPORT);
+    settings.appendProperty(MODE_KEY, MODE_REUSE_REPORT);
     profileWithActiveRule();
     sensor = buildSensor();
     // when
@@ -153,9 +164,9 @@ public class PitestSensorTest {
     // given
     workingConfiguration();
     when(fileSystem.baseDir()).thenReturn(TestUtils.getResource("."));
-    when(configuration.getString(REPORT_DIRECTORY_KEY, REPORT_DIRECTORY_DEF)).thenReturn("");
+    settings.appendProperty(REPORT_DIRECTORY_KEY, "");
     when(reportFinder.findReport(TestUtils.getResource("."))).thenReturn(null);
-    sensor = new PitestSensor(configuration, parser, rulesProfile, reportFinder, fileSystem, perspectives);
+    sensor = new PitestSensor(settings, parser, rulesProfile, reportFinder, fileSystem, perspectives);
     // when
     sensor.analyse(project, mock(SensorContext.class));
     // then no failure
@@ -163,7 +174,7 @@ public class PitestSensorTest {
 
   private void workingConfiguration() {
     when(project.getAnalysisType()).thenReturn(AnalysisType.DYNAMIC);
-    when(configuration.getString(MODE_KEY, MODE_SKIP)).thenReturn(MODE_REUSE_REPORT);
+    settings.appendProperty(MODE_KEY, MODE_REUSE_REPORT);
   }
 
   private void profileWithActiveRule() {
@@ -174,37 +185,42 @@ public class PitestSensorTest {
   }
 
   private void profileWithoutActiveRule() {
-    when(rulesProfile.getActiveRulesByRepository(REPOSITORY_KEY)).thenReturn(Collections.<ActiveRule>emptyList());
+    when(rulesProfile.getActiveRulesByRepository(REPOSITORY_KEY)).thenReturn(Collections.<ActiveRule> emptyList());
     when(rulesProfile.getName()).thenReturn("fake pit profile");
   }
 
   private PitestSensor buildSensor() {
     when(fileSystem.baseDir()).thenReturn(TestUtils.getResource("."));
-    when(configuration.getString(REPORT_DIRECTORY_KEY, REPORT_DIRECTORY_DEF)).thenReturn("");
+    settings.appendProperty(REPORT_DIRECTORY_KEY, "");
     when(reportFinder.findReport(TestUtils.getResource("."))).thenReturn(new File("fake-report.xml"));
 
     List<Mutant> mutants = new ArrayList<Mutant>();
-    Mutant survived = new Mutant(false, MutantStatus.SURVIVED, "survived", 42, "org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator");
+    Mutant survived = new Mutant(false, MutantStatus.SURVIVED, "survived", 42,
+        "org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator");
     mutants.add(survived);
     mutants.add(new Mutant(false, MutantStatus.KILLED, "killed", 10, "org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator"));
-    mutants.add(new Mutant(false, MutantStatus.NO_COVERAGE, "no coverage", -2, "org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator"));
+    mutants.add(new Mutant(false, MutantStatus.NO_COVERAGE, "no coverage", -2,
+        "org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator"));
     mutants.add(new Mutant(false, MutantStatus.MEMORY_ERROR, "memory error", 1000, null));
     mutants.add(new Mutant(false, MutantStatus.UNKNOWN, "unkwon", 0, null));
-    when(parser.parse(any(File.class))).thenReturn(mutants);
 
+    when(parser.parse(any(File.class))).thenReturn(mutants);
     when(context.getResource(any(JavaFile.class))).thenAnswer(new Answer<Object>() {
+
       public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
         return javaFile;
       }
     });
+
     Issuable.IssueBuilder issueBuilder = mock(Issuable.IssueBuilder.class);
+
     when(issueBuilder.ruleKey(any(RuleKey.class))).thenReturn(issueBuilder);
     when(issueBuilder.line(anyInt())).thenReturn(issueBuilder);
     when(issueBuilder.message(anyString())).thenReturn(issueBuilder);
     when(issuable.newIssueBuilder()).thenReturn(issueBuilder);
     when(perspectives.as(Issuable.class, javaFile)).thenReturn(issuable);
 
-    sensor = new PitestSensor(configuration, parser, rulesProfile, reportFinder, fileSystem, perspectives);
+    sensor = new PitestSensor(settings, parser, rulesProfile, reportFinder, fileSystem, perspectives);
     return sensor;
   }
 
