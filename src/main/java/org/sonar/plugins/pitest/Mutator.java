@@ -32,11 +32,10 @@ enum Mutator {
       "Inline Constant Mutator", "An inline constant has been changed"), RETURN_VALS(
       "org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator", "Return Values Mutator",
       "The return value of a method call has been replaced"), VOID_METHOD(
-      "org.pitest.mutationtest.engine.gregor.mutators.VoidMethodCallMutator", "Void Method Calls Mutator",
-      "A method call has been removed"), NON_VOID_METHOD("org.pitest.mutationtest.engine.gregor.mutators.NonVoidMethodCallMutator",
-      "Non Void Method Calls Mutator", "A method call has been removed"), CONSTRUCTOR(
-      "org.pitest.mutationtest.engine.gregor.mutators.ConstructorCallMutator", "Constructor Calls Mutator",
-      "A constructor call has been removed"), EXP_INLINE_CONS(
+      "org.pitest.mutationtest.engine.gregor.mutators.VoidMethodCallMutator", "Void Method Calls Mutator", "A method call has been removed"), NON_VOID_METHOD(
+      "org.pitest.mutationtest.engine.gregor.mutators.NonVoidMethodCallMutator", "Non Void Method Calls Mutator",
+      "A method call has been removed"), CONSTRUCTOR("org.pitest.mutationtest.engine.gregor.mutators.ConstructorCallMutator",
+      "Constructor Calls Mutator", "A constructor call has been removed"), EXP_INLINE_CONS(
       "org.pitest.mutationtest.engine.gregor.mutators.experimental.InlineConstantMutator", "Experimental Inline Constant Mutator",
       "An inline constant has been changed"), EXP_MEMBER_VAR(
       "org.pitest.mutationtest.engine.gregor.mutators.experimental.MemberVariableMutator", "Experimental Member Variable Mutator",
@@ -67,18 +66,17 @@ enum Mutator {
   }
 
   static Mutator parse(String mutatorKey) {
-    if (mutatorKey == null) {
-      return unknown(mutatorKey);
-    }
-    for (Mutator mutantStatus : Mutator.values()) {
-      if (mutantStatus.getKey().equals(mutatorKey)) {
-        return mutantStatus;
+    Mutator mutator = UNKNOWN;
+
+    if (mutatorKey != null) {
+      for (Mutator mutantStatus : Mutator.values()) {
+        if (mutantStatus.getKey().equals(mutatorKey)) {
+          mutator = mutantStatus;
+          break;
+        }
       }
     }
-    return unknown(mutatorKey);
-  }
 
-  private static Mutator unknown(String statusName) {
-    return UNKNOWN;
+    return mutator;
   }
 }

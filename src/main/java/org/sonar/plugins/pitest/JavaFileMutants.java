@@ -23,138 +23,140 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class JavaFileMutants {
-	private List<Mutant> mutants = new ArrayList<Mutant>();
-	private double mutationsTotal = 0;
-	private double mutationsNoCoverage = 0;
-	private double mutationsKilled = 0;
-	private double mutationsSurvived = 0;
-	private double mutationsMemoryError = 0;
-	private double mutationsTimedOut = 0;
-	private double mutationsUnknown = 0;
-	private double mutationsDetected = 0;
 
-	void addMutant(Mutant mutant) {
-		mutants.add(mutant);
-		if (mutant.isDetected()) {
-			incMutationsDetected();
-		}
-		switch (mutant.getMutantStatus()) {
-			case KILLED:
-				incMutationsKilled();
-				break;
-			case NO_COVERAGE:
-				incMutationsNoCoverage();
-				break;
-			case SURVIVED: // Only survived mutations are saved as violations
-				incMutationsSurvived();
-				break;
-			case MEMORY_ERROR:
-				incMutationsMemoryError();
-				break;
-			case TIMED_OUT:
-				incMutationsTimedOut();
-				break;
-			case UNKNOWN:
-				incMutationsUnknown();
-				break;
-		}
-	}
+  private final List<Mutant> mutants = new ArrayList<Mutant>();
 
-	private void incMutationsTotal() {
-		mutationsTotal++;
-	}
+  private double mutationsTotal = 0;
+  private double mutationsNoCoverage = 0;
+  private double mutationsKilled = 0;
+  private double mutationsSurvived = 0;
+  private double mutationsMemoryError = 0;
+  private double mutationsTimedOut = 0;
+  private double mutationsUnknown = 0;
+  private double mutationsDetected = 0;
 
-	private void incMutationsNoCoverage() {
-		incMutationsTotal();
-		mutationsNoCoverage++;
-	}
+  void addMutant(Mutant mutant) {
+    mutants.add(mutant);
+    if (mutant.isDetected()) {
+      incMutationsDetected();
+    }
+    switch (mutant.getMutantStatus()) {
+      case KILLED:
+        incMutationsKilled();
+        break;
+      case NO_COVERAGE:
+        incMutationsNoCoverage();
+        break;
+      case SURVIVED: // Only survived mutations are saved as violations
+        incMutationsSurvived();
+        break;
+      case MEMORY_ERROR:
+        incMutationsMemoryError();
+        break;
+      case TIMED_OUT:
+        incMutationsTimedOut();
+        break;
+      case UNKNOWN:
+        incMutationsUnknown();
+        break;
+    }
+  }
 
-	private void incMutationsKilled() {
-		incMutationsTotal();
-		mutationsKilled++;
-	}
+  private void incMutationsTotal() {
+    mutationsTotal++;
+  }
 
-	private void incMutationsSurvived() {
-		incMutationsTotal();
-		mutationsSurvived++;
-	}
+  private void incMutationsNoCoverage() {
+    incMutationsTotal();
+    mutationsNoCoverage++;
+  }
 
-	private void incMutationsMemoryError() {
-		incMutationsTotal();
-		mutationsMemoryError++;
-	}
+  private void incMutationsKilled() {
+    incMutationsTotal();
+    mutationsKilled++;
+  }
 
-	private void incMutationsTimedOut() {
-		incMutationsTotal();
-		mutationsTimedOut++;
-	}
+  private void incMutationsSurvived() {
+    incMutationsTotal();
+    mutationsSurvived++;
+  }
 
-	private void incMutationsUnknown() {
-		incMutationsTotal();
-		mutationsUnknown++;
-	}
+  private void incMutationsMemoryError() {
+    incMutationsTotal();
+    mutationsMemoryError++;
+  }
 
-	private void incMutationsDetected() {
-		mutationsDetected++;
-	}
+  private void incMutationsTimedOut() {
+    incMutationsTotal();
+    mutationsTimedOut++;
+  }
 
-	List<Mutant> getMutants() {
-		return mutants;
-	}
+  private void incMutationsUnknown() {
+    incMutationsTotal();
+    mutationsUnknown++;
+  }
 
-	/**
-	 * @return the mutationsTotal
-	 */
-	double getMutationsTotal() {
-		return mutationsTotal;
-	}
+  private void incMutationsDetected() {
+    mutationsDetected++;
+  }
 
-	/**
-	 * @return the mutationsNoCoverage
-	 */
-	double getMutationsNoCoverage() {
-		return mutationsNoCoverage;
-	}
+  List<Mutant> getMutants() {
+    return mutants;
+  }
 
-	/**
-	 * @return the mutationsKilled
-	 */
-	double getMutationsKilled() {
-		return mutationsKilled;
-	}
+  /**
+   * @return the mutationsTotal
+   */
+  double getMutationsTotal() {
+    return mutationsTotal;
+  }
 
-	/**
-	 * @return the mutationsSurvived
-	 */
-	double getMutationsSurvived() {
-		return mutationsSurvived;
-	}
+  /**
+   * @return the mutationsNoCoverage
+   */
+  double getMutationsNoCoverage() {
+    return mutationsNoCoverage;
+  }
 
-	/**
-	 * @return the mutationsMemoryError
-	 */
-	double getMutationsMemoryError() {
-		return mutationsMemoryError;
-	}
+  /**
+   * @return the mutationsKilled
+   */
+  double getMutationsKilled() {
+    return mutationsKilled;
+  }
 
-	/**
-	 * @return the mutationsTimedOut
-	 */
-	double getMutationsTimedOut() {
-		return mutationsTimedOut;
-	}
+  /**
+   * @return the mutationsSurvived
+   */
+  double getMutationsSurvived() {
+    return mutationsSurvived;
+  }
 
-	/**
-	 * @return the mutationsUnknown
-	 */
-	double getMutationsUnknown() {
-		return mutationsUnknown;
-	}
+  /**
+   * @return the mutationsMemoryError
+   */
+  double getMutationsMemoryError() {
+    return mutationsMemoryError;
+  }
 
-	/**
-	 * @return the mutationsDetected
-	 */
-	double getMutationsDetected() {
-		return mutationsDetected;
-	}
+  /**
+   * @return the mutationsTimedOut
+   */
+  double getMutationsTimedOut() {
+    return mutationsTimedOut;
+  }
+
+  /**
+   * @return the mutationsUnknown
+   */
+  double getMutationsUnknown() {
+    return mutationsUnknown;
+  }
+
+  /**
+   * @return the mutationsDetected
+   */
+  double getMutationsDetected() {
+    return mutationsDetected;
+  }
 }

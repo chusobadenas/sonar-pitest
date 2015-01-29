@@ -32,14 +32,14 @@ import org.sonar.api.measures.Metric;
  */
 public class PitestDecorator extends AbstractSumChildrenDecorator {
 
-	@DependedUpon
-	@Override
-	public List<Metric> generatesMetrics() {
-		return PitestMetrics.getQuantitativeMetrics();
-	}
+  @DependedUpon
+  @Override
+  public List<Metric> generatesMetrics() {
+    return PitestMetrics.getQuantitativeMetrics();
+  }
 
-	@Override
-	protected boolean shouldSaveZeroIfNoChildMeasures() {
-		return false;
-	}
+  @Override
+  protected boolean shouldSaveZeroIfNoChildMeasures() {
+    return false;
+  }
 }

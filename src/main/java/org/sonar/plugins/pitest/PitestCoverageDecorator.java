@@ -39,26 +39,30 @@ import com.google.common.collect.Lists;
  */
 public class PitestCoverageDecorator implements Decorator {
 
-	public boolean shouldExecuteOnProject(Project project) {
-		return project.getAnalysisType().isDynamic(true);
-	}
+  /**
+   * @param project
+   * @return true if Decorator should execute, false otherwise
+   */
+  public boolean shouldExecuteOnProject(Project project) {
+    return project.getAnalysisType().isDynamic(true);
+  }
 
-	@DependedUpon
-	public Metric getCoverageMetric() {
-		return PitestMetrics.MUTATIONS_COVERAGE;
-	}
+  @DependedUpon
+  public Metric getCoverageMetric() {
+    return PitestMetrics.MUTATIONS_COVERAGE;
+  }
 
-	@DependsUpon
-	public List<Metric> getBaseMetrics() {
-		return Lists.newArrayList(PitestMetrics.MUTATIONS_DETECTED, PitestMetrics.MUTATIONS_TOTAL);
-	}
+  @DependsUpon
+  public List<Metric> getBaseMetrics() {
+    return Lists.newArrayList(PitestMetrics.MUTATIONS_DETECTED, PitestMetrics.MUTATIONS_TOTAL);
+  }
 
-	public void decorate(Resource resource, DecoratorContext context) {
-		Double elements = MeasureUtils.getValue(context.getMeasure(PitestMetrics.MUTATIONS_TOTAL), 0.0);
+  public void decorate(Resource resource, DecoratorContext context) {
+    Double elements = MeasureUtils.getValue(context.getMeasure(PitestMetrics.MUTATIONS_TOTAL), 0.0);
 
-		if (elements > 0.0) {
-			Double coveredElements = MeasureUtils.getValue(context.getMeasure(PitestMetrics.MUTATIONS_DETECTED), 0.0);
-			context.saveMeasure(PitestMetrics.MUTATIONS_COVERAGE, (100.0 * coveredElements) / elements);
-		}
-	}
+    if (elements > 0.0) {
+      Double coveredElements = MeasureUtils.getValue(context.getMeasure(PitestMetrics.MUTATIONS_DETECTED), 0.0);
+      context.saveMeasure(PitestMetrics.MUTATIONS_COVERAGE, (100.0 * coveredElements) / elements);
+    }
+  }
 }

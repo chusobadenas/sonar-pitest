@@ -59,7 +59,7 @@ public class PitestSensor implements Sensor {
 
   private static final Logger LOG = LoggerFactory.getLogger(PitestSensor.class);
 
-  private JavaFileMutants noResourceMetrics = new JavaFileMutants();
+  private final JavaFileMutants noResourceMetrics = new JavaFileMutants();
 
   private final Settings settings;
   private final ResultParser parser;
@@ -69,6 +69,16 @@ public class PitestSensor implements Sensor {
   private final ModuleFileSystem fileSystem;
   private final ResourcePerspectives perspectives;
 
+  /**
+   * Constructor
+   * 
+   * @param settings
+   * @param parser
+   * @param rulesProfile
+   * @param reportFinder
+   * @param fileSystem
+   * @param perspectives
+   */
   public PitestSensor(Settings settings, ResultParser parser, RulesProfile rulesProfile, ReportFinder reportFinder,
       ModuleFileSystem fileSystem, ResourcePerspectives perspectives) {
     this.settings = settings;
@@ -80,12 +90,22 @@ public class PitestSensor implements Sensor {
     this.rulesProfile = rulesProfile;
   }
 
-  public boolean shouldExecuteOnProject(Project project) {
+  /**
+   * @param project
+   * @return true if Sensor should execute, false otherwise
+   */
+  public final boolean shouldExecuteOnProject(Project project) {
     return project.getAnalysisType().isDynamic(true) && !fileSystem.files(FileQuery.onSource().onLanguage("java")).isEmpty()
       && !MODE_SKIP.equals(executionMode);
   }
 
-  public void analyse(Project project, SensorContext context) {
+  /**
+   * Executes the Sensor
+   * 
+   * @param project
+   * @param context
+   */
+  public final void analyse(Project project, SensorContext context) {
     List<ActiveRule> activeRules = rulesProfile.getActiveRulesByRepository(REPOSITORY_KEY);
 
     // Ignore violations from report, if rule not activated in SonarQube
@@ -153,9 +173,9 @@ public class PitestSensor implements Sensor {
       if (resource == null) {
         LOG.warn("Mutation in an unknown resource: {}", mutant.getSonarJavaFileKey());
         LOG.debug("Mutant: {}", mutant);
-        processMutant(mutant, noResourceMetrics, resource, context, rule);
+        noResourceMetrics.addMutant(mutant);
       } else {
-        processMutant(mutant, getMetricsInfo(metricsByResource, resource), resource, context, rule);
+        processMutant(mutant, getMetricsInfo(metricsByResource, resource), resource, rule);
       }
     }
 
@@ -172,10 +192,10 @@ public class PitestSensor implements Sensor {
     return rule;
   }
 
-  private void processMutant(Mutant mutant, JavaFileMutants resourceMetricsInfo, Resource resource, SensorContext context, Rule rule) {
+  private void processMutant(Mutant mutant, JavaFileMutants resourceMetricsInfo, Resource resource, Rule rule) {
     resourceMetricsInfo.addMutant(mutant);
 
-    if (resource != null && rule != null && MutantStatus.SURVIVED.equals(mutant.getMutantStatus())) {
+    if (rule != null && MutantStatus.SURVIVED.equals(mutant.getMutantStatus())) {
       // Only survived mutations are saved as violations
       Issuable issuable = perspectives.as(Issuable.class, resource);
 
@@ -203,8 +223,11 @@ public class PitestSensor implements Sensor {
     return metricsInfo;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
-  public String toString() {
+  public final String toString() {
     return getClass().getSimpleName();
   }
 }

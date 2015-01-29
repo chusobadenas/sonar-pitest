@@ -43,54 +43,60 @@ import com.google.common.collect.Lists;
  */
 public class ResultParser implements BatchExtension {
 
-	private static final Logger LOG = LoggerFactory.getLogger(ResultParser.class);
-	private static final String ATTR_DETECTED = "detected";
-	private static final String ATTR_STATUS = "status";
-	private static final String ATTR_CLASS = "mutatedClass";
-	private static final String ATTR_LINE = "lineNumber";
-	private static final String ATTR_MUTATOR = "mutator";
-	
-	public Collection<Mutant> parse(File report) {
-		boolean detected;
-		MutantStatus mutantStatus;
-		String localPart, statusName, mutatedClass, mutator;
-		int lineNumber;
-		SMInputCursor mutationDetailsCursor ;
-		List<Mutant> mutants = Lists.newArrayList();
-		SMInputFactory inf = new SMInputFactory(XMLInputFactory.newInstance());
-		try {
-			SMHierarchicCursor rootCursor = inf.rootElementCursor(report);
-			rootCursor.advance();
-			SMInputCursor mutationCursor = rootCursor.childElementCursor();
-			while (mutationCursor.getNext() != null) {
-				detected = Boolean.parseBoolean(mutationCursor.getAttrValue(ATTR_DETECTED));
-				statusName = mutationCursor.getAttrValue(ATTR_STATUS);
-				mutantStatus = MutantStatus.parse(statusName);
-				if (mutantStatus.equals(MutantStatus.UNKNOWN)) {
-					LOG.warn("Unknown mutation status detected: {}", statusName);
-				}
-				mutatedClass = null;
-				mutator = null;
-				lineNumber = 0;
-				mutationDetailsCursor = mutationCursor.childElementCursor();
-				while (mutationDetailsCursor.getNext() != null) {
-					localPart = mutationDetailsCursor.getQName().getLocalPart();
-					if (ATTR_CLASS.equals(localPart)) {
-						mutatedClass = mutationDetailsCursor.collectDescendantText().trim();
-					}
-					else if (ATTR_LINE.equals(localPart)) {
-						lineNumber = Integer.parseInt(mutationDetailsCursor.collectDescendantText().trim());
-					}
-					else if (ATTR_MUTATOR.equals(localPart)) {
-						mutator = mutationDetailsCursor.collectDescendantText().trim();
-					}
-				}
-				mutants.add(new Mutant(detected, mutantStatus, mutatedClass, lineNumber, mutator));
-			}
-		}
-		catch (XMLStreamException e) {
-			throw new SonarException(e);
-		}
-		return mutants;
-	}
+  private static final Logger LOG = LoggerFactory.getLogger(ResultParser.class);
+  private static final String ATTR_DETECTED = "detected";
+  private static final String ATTR_STATUS = "status";
+  private static final String ATTR_CLASS = "mutatedClass";
+  private static final String ATTR_LINE = "lineNumber";
+  private static final String ATTR_MUTATOR = "mutator";
+
+  public Collection<Mutant> parse(File report) {
+    boolean detected;
+    MutantStatus mutantStatus;
+    String localPart, statusName, mutatedClass, mutator;
+    int lineNumber;
+    SMInputCursor mutationDetailsCursor;
+    List<Mutant> mutants = Lists.newArrayList();
+    SMInputFactory inf = new SMInputFactory(XMLInputFactory.newInstance());
+
+    try {
+      SMHierarchicCursor rootCursor = inf.rootElementCursor(report);
+      rootCursor.advance();
+
+      SMInputCursor mutationCursor = rootCursor.childElementCursor();
+
+      while (mutationCursor.getNext() != null) {
+        detected = Boolean.parseBoolean(mutationCursor.getAttrValue(ATTR_DETECTED));
+        statusName = mutationCursor.getAttrValue(ATTR_STATUS);
+        mutantStatus = MutantStatus.parse(statusName);
+
+        if (mutantStatus.equals(MutantStatus.UNKNOWN)) {
+          LOG.warn("Unknown mutation status detected: {}", statusName);
+        }
+
+        mutatedClass = null;
+        mutator = null;
+        lineNumber = 0;
+        mutationDetailsCursor = mutationCursor.childElementCursor();
+
+        while (mutationDetailsCursor.getNext() != null) {
+          localPart = mutationDetailsCursor.getQName().getLocalPart();
+
+          if (ATTR_CLASS.equals(localPart)) {
+            mutatedClass = mutationDetailsCursor.collectDescendantText().trim();
+          } else if (ATTR_LINE.equals(localPart)) {
+            lineNumber = Integer.parseInt(mutationDetailsCursor.collectDescendantText().trim());
+          } else if (ATTR_MUTATOR.equals(localPart)) {
+            mutator = mutationDetailsCursor.collectDescendantText().trim();
+          }
+        }
+
+        mutants.add(new Mutant(detected, mutantStatus, mutatedClass, lineNumber, mutator));
+      }
+    } catch (XMLStreamException e) {
+      throw new SonarException(e);
+    }
+
+    return mutants;
+  }
 }
